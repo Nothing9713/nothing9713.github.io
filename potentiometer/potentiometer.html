@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>电位差计仿真实验</title>
+    <style>
+        .tip-steps {
+            background: #0b0b10;
+            border-radius: 28px;
+            border-left: 3px solid #d4a853;
+            padding: 12px 16px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: #c0c0cc;
+        }
+
+        .step-num {
+            width: 22px;
+            height: 22px;
+            background: #2a2a34;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.7rem;
+            color: #d4a853;
+        }
+
+        .step-text {
+            white-space: nowrap;
+        }
+
+        @media (max-width: 700px) {
+            .tip-steps {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .step-text {
+                white-space: normal;
+            }
+        }
+
+        :root {
+            --bg: #000000;
+            --panel-bg: #141418;
+            --card-bg: #1a1a20;
+            --text: #e0e0e6;
+            --text-secondary: #888892;
+            --accent: #d4a853;
+            --accent2: #5baddf;
+            --danger: #e0556a;
+            --success: #4ec9a0;
+            --border: #2a2a34;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+            --radius: 14px;
+            --glow-success: 0 0 20px rgba(78, 201, 160, 0.45);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000000;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            user-select: none;
+        }
+
+        .dashboard {
+            max-width: 1600px;
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .experiment-area {
+            flex: 2.4;
+            min-width: 340px;
+            background: rgba(18, 18, 24, 0.85);
+            backdrop-filter: blur(2px);
+            border-radius: 28px;
+            box-shadow: var(--shadow), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            padding: 20px 22px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            border: 1px solid rgba(212, 168, 83, 0.2);
+        }
+
+        .records-area {
+            flex: 1.2;
+            min-width: 290px;
+            background: #0e0e12;
+            border-radius: 28px;
+            border: 1px solid rgba(212, 168, 83, 0.2);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(1px);
+        }
+
+        .records-header {
+            padding: 18px 20px 14px 20px;
+            border-bottom: 1px solid #2f2f38;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .records-header h3 {
+            color: #e6d8bd;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .clear-records-btn {
+            background: #1f1f28;
+            border: 1px solid #4a4a58;
+            color: #ccc;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .clear-records-btn:hover {
+            background: #3a2a28;
+            border-color: #d4a853;
+            color: #f0e0b0;
+        }
+
+        .table-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .table-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 18px 8px 18px;
+            scrollbar-width: thin;
+        }
+
+        .meas-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            color: #ececf0;
+        }
+
+        .meas-table th {
+            text-align: left;
+            padding: 12px 8px 10px 0;
+            font-weight: 600;
+            color: #cfc9b0;
+            border-bottom: 1px solid #5a5a6e;
+            font-size: 0.82rem;
+        }
+
+        .meas-table td {
+            padding: 10px 8px 10px 0;
+            border-bottom: 1px solid #3a3a48;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.86rem;
+        }
+
+        .delete-row {
+            background: none;
+            border: none;
+            color: #e08090;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 2px 10px;
+            border-radius: 30px;
+            transition: 0.15s;
+        }
+
+        .delete-row:hover {
+            color: #ffb0c0;
+            background: #2a1c1e;
+            transform: scale(1.05);
+        }
+
+        .meas-table tfoot td {
+            background: #0c0c14;
+            border-top: 2px solid #6a6a80;
+            border-bottom: none;
+            font-weight: 700;
+            padding: 12px 8px;
+            font-size: 0.95rem;
+        }
+
+        .avg-emf {
+            color: #7aecc0;
+            font-size: 1rem;
+            filter: drop-shadow(0 0 4px #2a6a4a);
+        }
+
+        .avg-count {
+            color: #ffdf9c;
+            font-weight: 600;
+        }
+
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            background: #1c1c24;
+            color: #ccc;
+            border-color: #3a3a48;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-calibrate.active-mode {
+            background: #1f5a7a;
+            color: #fff;
+            border-color: #6ec8ff;
+            box-shadow: 0 0 16px rgba(94, 176, 230, 0.5);
+        }
+
+        .btn-measure.active-mode {
+            background: #aa3c34;
+            color: #fff;
+            border-color: #ff8a7a;
+            box-shadow: 0 0 16px rgba(220, 80, 90, 0.5);
+        }
+
+        .btn-record.has-record {
+            background: #1f3a2e;
+            border-color: #6edcad;
+            color: #c0ffdc;
+            box-shadow: var(--glow-success);
+        }
+
+        .btn-fine {
+            padding: 7px 14px;
+            border-radius: 32px;
+            font-size: 0.85rem;
+            background: #20202a;
+            color: #ddd;
+            border-color: #4a4a60;
+            font-weight: bold;
+        }
+
+        .fine-label {
+            color: #aaa;
+            font-size: 0.7rem;
+            margin: 0 4px;
+            font-weight: 500;
+        }
+
+        .info-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: rgba(26, 26, 34, 0.8);
+            border-radius: 20px;
+            padding: 14px 16px;
+            border: 1px solid #2e2e3c;
+            backdrop-filter: blur(4px);
+        }
+
+        .info-item {
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .info-label {
+            font-size: 0.68rem;
+            color: #b0b0c0;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #f0f0fa;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .info-value.highlight {
+            color: #7aecc0;
+            text-shadow: 0 0 6px #1e6a4a;
+        }
+
+        .tip-text {
+            font-size: 0.72rem;
+            color: #9a9aac;
+            text-align: center;
+            background: #0b0b10;
+            padding: 10px 12px;
+            border-radius: 28px;
+            border-left: 3px solid #d4a853;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            background: #030305;
+            border-radius: 24px;
+            border: 1.5px solid #2e2e3e;
+            overflow: hidden;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.8);
+            cursor: default;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            touch-action: none;
+        }
+
+        @media (max-width: 800px) {
+            .dashboard {
+                flex-direction: column;
+            }
+
+            .meas-table td,
+            .meas-table th {
+                font-size: 0.75rem;
+            }
+
+            .info-value {
+                font-size: 0.85rem;
+            }
+
+            .btn {
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+        <div class="experiment-area">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <h1
+                    style="font-size:1.4rem; background: linear-gradient(135deg, #ece4cc, #d4a853); background-clip: text; -webkit-background-clip: text; color: transparent; display:flex; gap:12px;">
+                    <span
+                        style="background:#1f1a0e; padding:6px 14px; border-radius:40px; color:#dbb86b; font-size:1.2rem;">⚡</span>
+                    电位差计测电动势实验仿真
+                </h1>
+                <span
+                    style="background:#22201c; color:#e8c87a; padding:5px 16px; border-radius:32px; font-size:0.7rem; font-weight:500;">仿真实验</span>
+            </div>
+            <div class="canvas-wrapper"><canvas id="mainCanvas" width="900" height="520"
+                    style="width:100%; height:auto; display:block;"></canvas></div>
+            <div class="controls-row">
+                <span class="fine-label">🪄 模式</span>
+                <button class="btn btn-calibrate active-mode" id="btnCalibrate">📐 校准模式</button>
+                <button class="btn btn-measure" id="btnMeasure">🔍 测量模式</button>
+                <span class="fine-label">🕹️ 微调</span>
+                <button class="btn btn-fine" id="btnFineLeft">◀ 向左微调</button>
+                <button class="btn btn-fine" id="btnFineRight">向右微调 ▶</button>
+                <span class="fine-label">🖼️ 操作</span>
+                <button class="btn btn-record" id="btnRecord">📝 记录零位</button>
+                <button class="btn btn-reset" id="btnReset">🔄 重置实验</button>
+            </div>
+            <div class="info-panel">
+                <div class="info-item" id="targetInfo">
+                    <div class="info-label" id="targetLabel">🎯 目标电势</div>
+                    <div class="info-value" id="valTarget">-- V</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">⚡ 补偿电压 U<sub>AC</sub></div>
+                    <div class="info-value" id="valUAC">-- V</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">📊 检流计偏转 ΔV</div>
+                    <div class="info-value" id="valDeltaV">-- mV</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">📌 触头位置 L</div>
+                    <div class="info-value" id="valPosition">-- mm</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">🔖 校准位置 L<sub>s</sub></div>
+                    <div class="info-value" id="valLs">未记录</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">📐 测量位置 L<sub>x</sub></div>
+                    <div class="info-value" id="valLx">未记录</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">🔋 本次 E<sub>x</sub></div>
+                    <div class="info-value highlight" id="valEx">-- V</div>
+                </div>
+            </div>
+            <div class="tip-steps">
+                <div class="step"><span class="step-num">1</span><span class="step-text">校准模式 → 调零 → 记录 Lₛ</span></div>
+                <div class="step"><span class="step-num">2</span><span class="step-text">测量模式 → 调零 → 记录 Lₓ</span></div>
+                <div class="step"><span class="step-num">3</span><span class="step-text">拖拽 / 微调 / 键盘 ←→ / 长按连续</span>
+                </div>
+            </div>
+        </div>
+        <div class="records-area">
+            <div class="records-header">
+                <h3>📋 电动势测量记录表</h3>
+                <button class="clear-records-btn" id="clearTableBtn">🗑 清空记录</button>
+            </div>
+            <div class="table-container">
+                <div class="table-wrapper">
+                    <table class="meas-table" id="measTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Lₓ (mm)</th>
+                                <th>Lₛ (mm)</th>
+                                <th>Eₓ (V)</th>
+                                <th>残余ΔV (mV)</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="6" style="text-align:center; padding:32px; color:#a0a0b0;">
+                                    无记录，在测量模式下点击“记录位置”</td>
+                            </tr>
+                        </tbody>
+                        <tfoot id="tableFoot" style="display: none;">
+                            <tr>
+                                <td colspan="6" style="text-align: center;"><span style="font-weight:700;">📊 平均电动势:
+                                    </span><span id="avgExValueFoot" class="avg-emf">--- V</span>&nbsp;&nbsp;&nbsp;<span
+                                        style="font-weight:700;">📌 有效次数: </span><span id="recordCountFoot"
+                                        class="avg-count">0</span></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (
+            //为了单文件所以用了JavaScript内联
+        function () {
+            // ---------- 1. DOM ----------
+            const canvas = document.getElementById('mainCanvas');
+            const ctx = canvas.getContext('2d');
+            const canvasWrapper = document.querySelector('.canvas-wrapper');
+
+            const btnCalibrate = document.getElementById('btnCalibrate');
+            const btnMeasure = document.getElementById('btnMeasure');
+            const btnRecord = document.getElementById('btnRecord');
+            const btnFineLeft = document.getElementById('btnFineLeft');
+            const btnFineRight = document.getElementById('btnFineRight');
+            const btnReset = document.getElementById('btnReset');
+            const clearTableBtn = document.getElementById('clearTableBtn');
+
+            const valPosition = document.getElementById('valPosition');
+            const valUAC = document.getElementById('valUAC');
+            const valTarget = document.getElementById('valTarget');
+            const valDeltaV = document.getElementById('valDeltaV');
+            const valLs = document.getElementById('valLs');
+            const valLx = document.getElementById('valLx');
+            const valEx = document.getElementById('valEx');
+            const tableBody = document.getElementById('tableBody');
+            const tableFoot = document.getElementById('tableFoot');
+            const avgExValueFoot = document.getElementById('avgExValueFoot');
+            const recordCountFoot = document.getElementById('recordCountFoot');
+
+            // ---------- 2. 常量 ----------
+            const RESISTOR_LENGTH_MM = 600;
+            const WIRE_X1 = 130, WIRE_X2 = 730, WIRE_Y = 140;
+            const WIRE_LENGTH_PX = WIRE_X2 - WIRE_X1;
+            const FINE_STEP_MM = 0.001;
+            const LONG_PRESS_DELAY = 280;
+            const REPEAT_INTERVAL = 12;
+            const KEY_STEP_NORMAL = 0.01;
+            const KEY_STEP_FINE = 0.5;
+            const WHEEL_STEP = 0.2;
+
+            //缓动相关参数
+            const FOLLOW_FACTOR = 0.16;    //每帧移动剩余距离的比例
+            const SNAP_THRESHOLD = 0.00001;  //当差距小于此值时直接吸附
+
+            // ---------- 3. 状态 ----------
+            let mode = 'calibrate';
+            let sliderPosX = WIRE_X1;
+            let lsRecorded = null;
+            let lxRecorded = null;
+            let vAB = 0, ES = 0, EX_TRUE = 0;
+            let measurementRecords = [];
+            let nextId = 1;
+            let galvanometerJitter = 0.05;
+
+            // 拖拽跟随相关
+            let isDragging = false;
+            let targetPosX = null;           // 鼠标映射的目标位置 (画布坐标)
+            let animationId = null;          // requestAnimationFrame ID
+            let lastTimestamp = null;        // 用于计算时间差
+
+            // 其他定时器
+            let fineTimer = null, longPressTimer = null;
+            let drawPending = false;
+
+            // ---------- 4. 辅助函数 ----------
+            function getRandomArbitrary(min, max) { return Math.random() * (max - min) + min; }
+            function initPhysicalParams() { ES = getRandomArbitrary(1.000, 1.030); EX_TRUE = getRandomArbitrary(0.7, 1.7); vAB = getRandomArbitrary(2.4, 3.0); }
+            function getSliderDist() { return sliderPosX - WIRE_X1; }
+            function getUAC() { return vAB * (getSliderDist() / RESISTOR_LENGTH_MM); }
+            function getTargetEMF() { return mode === 'calibrate' ? ES : EX_TRUE; }
+            function getDeltaV() { return getUAC() - getTargetEMF(); }
+            function getDeviationColor(dv) { const a = Math.abs(dv); if (a < 0.0015) return '#7affc0'; if (a < 0.008) return '#ffdd88'; return '#ff7a6e'; }
+            function getGalvanometerAngle() { const dv = getDeltaV(); let angle = 62 * Math.tanh(dv / 0.005); const jitter = galvanometerJitter * (Math.random() - 0.5) * 1.2; return angle + jitter * Math.min(0.9, Math.abs(dv) / 0.004); }
+            function clampSlider(x) { return Math.max(WIRE_X1, Math.min(WIRE_X2, x)); }
+
+            // ---------- 5. UI 更新 ----------
+            function updateInfoPanel() {
+                const dist = getSliderDist(), uac = getUAC(), dv = getDeltaV(), target = getTargetEMF();
+                valPosition.textContent = dist.toFixed(3) + ' mm';
+                valUAC.textContent = uac.toFixed(5) + ' V';
+                valTarget.textContent = target.toFixed(5) + ' V';
+                valDeltaV.textContent = (dv * 1000).toFixed(2) + ' mV';
+                valDeltaV.style.color = getDeviationColor(dv);
+                valLs.textContent = lsRecorded !== null ? lsRecorded.toFixed(3) + ' mm' : '未记录';
+                valLx.textContent = lxRecorded !== null ? lxRecorded.toFixed(3) + ' mm' : '未记录';
+                if (lsRecorded !== null && lxRecorded !== null && lsRecorded > 0.5) valEx.textContent = (ES * (lxRecorded / lsRecorded)).toFixed(5) + ' V';
+                else if (lsRecorded !== null) valEx.textContent = '待测量...';
+                else valEx.textContent = '-- V';
+            }
+
+            function renderRecordsTable() {
+                if (measurementRecords.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:28px; color:#a0a0ba;">暂无测量数据<br>测量模式下点击“记录位置”储存实验数据</td></tr>';
+                    tableFoot.style.display = 'none';
+                    return;
+                }
+                let html = '', sumEx = 0;
+                measurementRecords.forEach((rec, index) => {
+                    sumEx += rec.ex;
+                    html += `<tr>
+                        <td style="font-weight:600;">${index + 1}</td>
+                        <td>${rec.lx.toFixed(2)}</td>
+                        <td>${rec.lsUsed.toFixed(2)}</td>
+                        <td style="font-weight:700; color:#c6ffda;">${rec.ex.toFixed(5)}</td>
+                        <td style="color:${Math.abs(rec.deltaMv) < 1.8 ? '#8affc0' : '#f5b07e'}">${rec.deltaMv.toFixed(1)}</td>
+                        <td><button class="delete-row" data-id="${rec.id}">✕</button></td>
+                    </tr>`;
+                });
+                tableBody.innerHTML = html;
+                const avgEx = sumEx / measurementRecords.length;
+                avgExValueFoot.textContent = avgEx.toFixed(6) + ' V';
+                recordCountFoot.textContent = measurementRecords.length;
+                tableFoot.style.display = 'table-footer-group';
+                document.querySelectorAll('.delete-row').forEach(btn => btn.addEventListener('click', (e) => {
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    const idx = measurementRecords.findIndex(r => r.id === id);
+                    if (idx !== -1) {
+                        measurementRecords.splice(idx, 1);
+                        renderRecordsTable();
+                        requestDraw();      // 立即重绘画布，清除被删除的标记
+                        updateInfoPanel();  // 可选
+                    }
+                }));
+            }
+            function addMeasurementRecord(lx_mm, ls_mm, dv, exVal) { measurementRecords.push({ id: nextId++, lx: lx_mm, lsUsed: ls_mm, ex: exVal, deltaMv: dv * 1000 }); lxHistory.push(lx_mm); renderRecordsTable(); }
+            function updateModeUI() {
+                const lbl = document.getElementById('targetLabel');
+                if (mode === 'calibrate') { btnCalibrate.classList.add('active-mode'); btnMeasure.classList.remove('active-mode'); if (lbl) lbl.innerHTML = '🎯 目标电势 E<sub>s</sub>'; }
+                else { btnMeasure.classList.add('active-mode'); btnCalibrate.classList.remove('active-mode'); if (lbl) lbl.innerHTML = '🎯 目标电势 E<sub>x</sub>'; }
+                updateRecordBtnStyle(); requestDraw(); updateInfoPanel();
+            }
+            function updateRecordBtnStyle() {
+                const has = (mode === 'calibrate' && lsRecorded !== null) || (mode === 'measure' && lxRecorded !== null);
+                has ? btnRecord.classList.add('has-record') : btnRecord.classList.remove('has-record');
+                btnRecord.textContent = mode === 'calibrate' ? (lsRecorded !== null ? '✅ 重新校准' : '📝 记录校准') : (lxRecorded !== null ? '✅ 再次测量' : '📝 记录测量');
+            }
+            function fullReset() {
+                mode = 'calibrate'; sliderPosX = WIRE_X1; lsRecorded = null; lxRecorded = null;
+                initPhysicalParams(); measurementRecords = []; lxHistory = []; nextId = 1; galvanometerJitter = 0.05;
+                if (animationId) cancelAnimationFrame(animationId); animationId = null;
+                isDragging = false; targetPosX = null;
+                renderRecordsTable(); updateModeUI(); updateInfoPanel(); requestDraw();
+            }
+            function clearRecordsOnly() { measurementRecords = []; lxHistory = []; nextId = 1; renderRecordsTable(); }
+
+            // ---------- 6. 微调按钮 ----------
+            function doFineStep(d) { sliderPosX = clampSlider(sliderPosX + d * FINE_STEP_MM); galvanometerJitter = Math.max(0.02, galvanometerJitter - 0.012); requestDraw(); updateInfoPanel(); }
+            function startFinePress(d) { doFineStep(d); longPressTimer = setTimeout(() => { if (fineTimer) clearInterval(fineTimer); fineTimer = setInterval(() => { doFineStep(d); }, REPEAT_INTERVAL); }, LONG_PRESS_DELAY); }
+            function stopFinePress() { if (longPressTimer) clearTimeout(longPressTimer); if (fineTimer) clearInterval(fineTimer); fineTimer = longPressTimer = null; requestDraw(); }
+            function bindFineButton(btn, dir) {
+                btn.addEventListener('mousedown', (e) => { e.preventDefault(); startFinePress(dir); });
+                btn.addEventListener('mouseup', stopFinePress); btn.addEventListener('mouseleave', stopFinePress);
+                btn.addEventListener('touchstart', (e) => { e.preventDefault(); startFinePress(dir); }, { passive: false });
+                btn.addEventListener('touchend', stopFinePress); btn.addEventListener('touchcancel', stopFinePress);
+            }
+
+            // ---------- 7. 缓动跟随拖拽核心 ----------
+            // 将鼠标事件坐标映射到电阻丝上的目标位置 (画布坐标系，单位mm)
+            function getTargetFromEvent(e) {
+                const rect = canvas.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                let clientX = e.clientX;
+                if (e.touches) clientX = e.touches[0].clientX;
+                const cssX = clientX - rect.left;
+                const physicalX = cssX * dpr;
+                const offsetX = (window._drawOffsetX || 0) * dpr;
+                const scale = window._drawScale || 1;
+                let canvasX = (physicalX - offsetX) / (scale * dpr);
+                // 限制在电阻丝范围内
+                return clampSlider(canvasX);
+            }
+
+            function startDragging(e) {
+                lastTimestamp = null;
+                e.preventDefault();
+                const target = getTargetFromEvent(e);
+                // 检测是否点击在滑块附近或电阻丝上
+                const rect = canvas.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                let clientY = e.clientY;
+                if (e.touches) clientY = e.touches[0].clientY;
+                const cssY = clientY - rect.top;
+                const physicalY = cssY * dpr;
+                const offsetY = (window._drawOffsetY || 0) * dpr;
+                const scale = window._drawScale || 1;
+                const mouseY = (physicalY - offsetY) / (scale * dpr);
+                const hitSlider = (Math.abs(target - sliderPosX) < 28 && Math.abs(mouseY - WIRE_Y) < 42);
+                const hitWire = (mouseY > WIRE_Y - 30 && mouseY < WIRE_Y + 30 && target > WIRE_X1 - 15 && target < WIRE_X2 + 15);
+                if (hitSlider || hitWire) {
+                    isDragging = true;
+                    targetPosX = target;   // 记录鼠标位置
+                    // 如果已经有动画循环，先停止
+                    if (animationId) cancelAnimationFrame(animationId);
+                    animationId = requestAnimationFrame(followAnimation);
+                }
+            }
+
+            function onDragMove(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                const newTarget = getTargetFromEvent(e);
+                targetPosX = newTarget;   // 更新目标位置
+            }
+
+            function stopDragging() {
+                lastTimestamp = null;
+                if (!isDragging) return;
+                isDragging = false;
+                targetPosX = null;
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+                requestDraw();
+                updateInfoPanel();
+            }
+            //这个函数负责滑块运动
+            function followAnimation(now) {
+                if (!isDragging || targetPosX === null) {
+                    lastTimestamp = null;
+                    return;
+                }
+                if (lastTimestamp === null) {
+                    lastTimestamp = now;
+                    animationId = requestAnimationFrame(followAnimation);
+                    return;
+                }
+                let dt = Math.min(0.033, (now - lastTimestamp) / 1000);
+                if (dt <= 0) {
+                    lastTimestamp = now;
+                    animationId = requestAnimationFrame(followAnimation);
+                    return;
+                }
+                let dx = targetPosX - sliderPosX;
+                let absDx = Math.abs(dx);
+                if (absDx < SNAP_THRESHOLD) {
+                    sliderPosX = targetPosX;
+                    galvanometerJitter = 0.06;
+                    requestDraw();
+                    updateInfoPanel();
+                    lastTimestamp = null;
+                    animationId = requestAnimationFrame(followAnimation);
+                    return;
+                }
+
+                // ---------- 速度曲线定义 ----------
+                const D_SLOW = 3.0;        // 低速区间上限 (mm)
+                const D_FAST = 5.0;        // 高速区间下限 (mm)
+                const V_SLOW = 0.1;        // 低速区速度 (mm/s)
+                const K_LINEAR = 5;      // 高速区比例系数 v = K_LINEAR * d
+
+                let speed;
+                if (absDx <= D_SLOW) {
+                    speed = V_SLOW;
+                } else if (absDx >= D_FAST) {
+                    speed = K_LINEAR * absDx;
+                } else {
+                    // 过渡区间 [D_SLOW, D_FAST] 使用三次 Hermite 插值
+                    // 使速度值和导数值在两端连续
+                    let t = (absDx - D_SLOW) / (D_FAST - D_SLOW);  // 0→1
+                    // 端点速度值
+                    let v0 = V_SLOW;
+                    let v1 = K_LINEAR * D_FAST;
+                    // 端点导数值 (对距离的导数 dv/dd)
+                    let dv0 = 0;                     // 左端导数为0（恒定速度）
+                    let dv1 = K_LINEAR;              // 右端导数为 K_LINEAR
+                    // Hermite 基函数
+                    let t2 = t * t;
+                    let t3 = t2 * t;
+                    let h00 = 2 * t3 - 3 * t2 + 1;
+                    let h10 = t3 - 2 * t2 + t;
+                    let h01 = -2 * t3 + 3 * t2;
+                    let h11 = t3 - t2;
+                    speed = h00 * v0 + h10 * dv0 * (D_FAST - D_SLOW) + h01 * v1 + h11 * dv1 * (D_FAST - D_SLOW);
+                }
+
+                let move = Math.sign(dx) * Math.min(speed * dt, absDx);
+                sliderPosX = clampSlider(sliderPosX + move);
+                galvanometerJitter = 0.06;
+                requestDraw();
+                updateInfoPanel();
+
+                lastTimestamp = now;
+                animationId = requestAnimationFrame(followAnimation);
+            }
+
+            // ---------- 8. 绘图模块 (完整保留原始绘图逻辑，确保视觉完全一致) ----------
+            function requestDraw() { if (!drawPending) { drawPending = requestAnimationFrame(() => { draw(); drawPending = false; }); } }
+            function getCalibAlpha() { return mode === 'calibrate' ? 1.0 : 0.4; }
+            function getMeasureAlpha() { return mode === 'measure' ? 1.0 : 0.4; }
+
+            function draw() {
+                if (!ctx) return;
+                const container = canvasWrapper, containerW = container.clientWidth, containerH = container.clientHeight;
+                if (containerW === 0 || containerH === 0) return;
+                const originalWidth = 900, originalHeight = 520, ratio = originalWidth / originalHeight;
+                let drawWidth = containerW, drawHeight = containerW / ratio;
+                if (drawHeight > containerH) { drawHeight = containerH; drawWidth = containerH * ratio; }
+                const offsetX = (containerW - drawWidth) / 2, offsetY = (containerH - drawHeight) / 2;
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = containerW * dpr; canvas.height = containerH * dpr;
+                canvas.style.width = `${containerW}px`; canvas.style.height = `${containerH}px`;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#030307'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.save();
+                ctx.translate(offsetX * dpr, offsetY * dpr);
+                const scale = drawWidth / originalWidth;
+                ctx.scale(scale * dpr, scale * dpr);
+                drawFullCircuit();
+                ctx.restore();
+                window._drawOffsetX = offsetX; window._drawOffsetY = offsetY; window._drawScale = scale;
+            }
+
+            // 以下为绘图函数
+            function drawFullCircuit() {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(212,168,83,0.06)'; ctx.lineWidth = 0.4;
+                for (let i = 0; i < 900; i += 45) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 520); ctx.stroke(); }
+                for (let i = 0; i < 520; i += 45) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(900, i); ctx.stroke(); }
+                ctx.restore();
+                drawAdvancedBattery(80, 265, 'E', '#9fc87a', '工作电源');
+                drawProtectiveResistorWithZigzag(730, 215, 'R', '#bcbcbc');
+                drawResistorWireWithScale();
+                drawSliderPointerPremium();
+                drawAdvancedGalvanometer(400, 220);
+                drawAdvancedSmallBattery(250, 430, 'Eₛ', '#5baddf', '标准电池', mode === 'calibrate');
+                drawAdvancedSmallBattery(550, 430, 'Eₓ', '#e0556a', '待测电池', mode === 'measure');
+                drawPrecisionSwitch(400, 345);
+                drawWorkCircuit();
+                drawCalibrationCircuit();
+                drawMeasurementCircuit();
+                drawCommonWires();
+                drawNodesWithAlpha();
+                if (lsRecorded !== null) {
+                    let x = WIRE_X1 + lsRecorded;
+                    ctx.shadowBlur = 8; ctx.shadowColor = '#3a86c0';
+                    ctx.fillStyle = 'rgba(91,173,223,0.85)'; ctx.beginPath(); ctx.moveTo(x, WIRE_Y - 8); ctx.lineTo(x - 9, WIRE_Y - 28); ctx.lineTo(x + 9, WIRE_Y - 28); ctx.fill();
+                    ctx.fillStyle = '#ffffff'; ctx.font = "12px 'Monaspace Krypton', monospace"; ctx.fillText('Lₛ', x - 5, WIRE_Y - 20);
+                    ctx.shadowBlur = 0;
+                }
+                if (measurementRecords.length > 0) {
+                    for (let i = 0; i < measurementRecords.length; i++) {
+                        const rec = measurementRecords[i];
+                        const lxPos = rec.lx;
+                        const x = WIRE_X1 + lxPos;
+                        ctx.shadowBlur = 8; ctx.shadowColor = '#cc6050';
+                        ctx.fillStyle = `rgba(224, 85, 106, ${0.6 + i * 0.1})`;
+                        ctx.beginPath(); ctx.moveTo(x, WIRE_Y - 8); ctx.lineTo(x - 9, WIRE_Y - 28); ctx.lineTo(x + 9, WIRE_Y - 28); ctx.fill();
+                        ctx.fillStyle = '#fff5ea'; ctx.font = "12px 'Monaspace Krypton', monospace"; ctx.fillText('Lₓ', x - 5, WIRE_Y - 20);
+                        ctx.font = "9px 'Monaspace Krypton', monospace"; ctx.fillText((i + 1).toString(), x + 1, WIRE_Y - 22);
+                        ctx.shadowBlur = 0;
+                    }
+                }
+                const uacValue = getUAC();
+                const dist = getSliderDist();
+                ctx.font = "16px 'Monaspace Krypton', monospace"; ctx.textAlign = 'left';
+                ctx.fillStyle = '#fae7b3'; ctx.shadowBlur = 4; ctx.shadowColor = '#ffdd99';
+                ctx.fillText(`Uₐᴄ = ${uacValue.toFixed(5)} V`, sliderPosX - 50, WIRE_Y - 60);
+                ctx.fillText(`Lₓ = ${dist.toFixed(3)} mm`, sliderPosX - 50, WIRE_Y - 40);
+                ctx.textAlign = 'left'; ctx.shadowBlur = 0;
+            }
+
+            function drawWorkCircuit() {
+                ctx.save();
+                ctx.globalAlpha = 1.0;
+                ctx.lineWidth = 2.6;
+                ctx.lineCap = 'round';
+                ctx.shadowBlur = 3;
+                ctx.shadowColor = 'rgba(220,180,100,0.5)';
+                ctx.strokeStyle = '#dcbc86';
+                drawSmartLine(80, 245, 130, 245);
+                drawSmartLine(730, 285, 80, 285);
+                drawSmartLine(730, 140, 730, 193);
+                drawSmartLine(730, 237, 730, 285);
+                ctx.restore();
+            }
+
+            function drawCalibrationCircuit() {
+                ctx.save();
+                ctx.globalAlpha = getCalibAlpha();
+                ctx.lineWidth = 2.6;
+                ctx.lineCap = 'round';
+                ctx.shadowBlur = 3;
+                ctx.shadowColor = 'rgba(100,150,220,0.5)';
+                ctx.strokeStyle = '#8ab3df';
+                drawSmartLine(130, 395, 231, 395);
+                drawSmartLine(231, 395, 231, 430);
+                drawSmartLine(269, 430, 269, 345);
+                drawSmartLine(269, 345, 365, 345);
+                ctx.restore();
+            }
+
+            function drawMeasurementCircuit() {
+                ctx.save();
+                ctx.globalAlpha = getMeasureAlpha();
+                ctx.lineWidth = 2.6;
+                ctx.lineCap = 'round';
+                ctx.shadowBlur = 3;
+                ctx.shadowColor = 'rgba(220,80,90,0.5)';
+                ctx.strokeStyle = '#e88a78';
+                drawSmartLine(130, 385, 531, 385);
+                drawSmartLine(531, 385, 531, 430);
+                drawSmartLine(569, 430, 569, 345);
+                drawSmartLine(569, 345, 435, 345);
+                ctx.restore();
+            }
+
+            function drawCommonWires() {
+                ctx.save();
+                ctx.globalAlpha = 1.0;
+                ctx.lineWidth = 2.6;
+                ctx.lineCap = 'round';
+                ctx.shadowBlur = 3;
+                ctx.shadowColor = 'rgba(220,180,100,0.5)';
+                ctx.strokeStyle = '#eaeef5';
+                drawSmartLine(400, 165, sliderPosX, 165);
+                drawSmartLine(sliderPosX, 165, sliderPosX, 135);
+                drawSmartLine(400, 170, 400, 165);
+                drawSmartLine(400, 363, 400, 270);
+                drawSmartLine(130, 140, 130, 395);
+                ctx.restore();
+            }
+
+            function drawNodesWithAlpha() {
+                drawNodeGlow(130, 140, '#f5e0b0', 1.0);
+                drawNodeGlow(730, 140, '#f5e0b0', 1.0);
+                drawNodeGlow(sliderPosX, 140, (Math.abs(getDeltaV()) < 0.0015) ? '#6affb0' : '#e8bc6a', 1.0);
+                drawNodeGlow(130, 245, '#ddb87a', 1.0);
+                drawNodeGlow(400, 345, '#e0e0ff', 1.0);
+                drawNodeGlow(80, 285, '#f5e0b0', 1.0);
+                drawNodeGlow(80, 245, '#f5e0b0', 1.0);
+                drawNodeGlow(730, 237, '#f5e0b0', 1.0);
+                drawNodeGlow(730, 193, '#f5e0b0', 1.0);
+                drawNodeGlow(400, 170, '#f5e0b0', 1.0);
+                drawNodeGlow(400, 270, '#f5e0b0', 1.0);
+                const calAlpha = getCalibAlpha();
+                drawNodeGlow(130, 395, '#8ab3df', calAlpha);
+                drawNodeGlow(231, 430, '#8ab3df', calAlpha);
+                drawNodeGlow(269, 430, '#8ab3df', calAlpha);
+                drawNodeGlow(365, 345, '#8ab3df', calAlpha);
+                const measAlpha = getMeasureAlpha();
+                drawNodeGlow(130, 385, '#e88a7a', measAlpha);
+                drawNodeGlow(531, 430, '#e88a7a', measAlpha);
+                drawNodeGlow(569, 430, '#e88a7a', measAlpha);
+                drawNodeGlow(435, 345, '#e88a7a', measAlpha);
+            }
+
+            function drawResistorWireWithScale() {
+                const x = WIRE_X1,
+                    y = WIRE_Y,
+                    w = WIRE_LENGTH_PX,
+                    h = 18;
+                const left = x,
+                    top = y - h / 2;
+                ctx.fillStyle = '#0a0a10';
+                roundRect(left, top, w, h, 8, true, false);
+                ctx.strokeStyle = '#e8bc7a';
+                ctx.lineWidth = 2.5;
+                roundRect(left, top, w, h, 8, false, true);
+                ctx.beginPath();
+                ctx.strokeStyle = '#d4a853aa';
+                ctx.lineWidth = 1;
+                for (let mm = 5; mm <= RESISTOR_LENGTH_MM; mm += 5) {
+                    let px = left + (mm / RESISTOR_LENGTH_MM) * w;
+                    let hgt = (mm % 10 === 0) ? 10 : 6;
+                    ctx.beginPath();
+                    ctx.moveTo(px, y - hgt / 2);
+                    ctx.lineTo(px, y + hgt / 2);
+                    ctx.stroke();
+                }
+                const rulerY = y - 28;
+                ctx.fillStyle = '#c0c0d0';
+                ctx.font = "10px 'Monaspace Krypton', monospace";
+                ctx.textAlign = 'center';
+                for (let mm = 0; mm <= RESISTOR_LENGTH_MM; mm += 50) {
+                    let px = left + (mm / RESISTOR_LENGTH_MM) * w;
+                    ctx.beginPath();
+                    ctx.moveTo(px, rulerY + 4);
+                    ctx.lineTo(px, rulerY + 12);
+                    ctx.stroke();
+                    ctx.fillText(mm.toString(), px, rulerY);
+                }
+                ctx.beginPath();
+                ctx.strokeStyle = '#b0b0cc88';
+                ctx.lineWidth = 1;
+                for (let mm = 10; mm < RESISTOR_LENGTH_MM; mm += 10) {
+                    if (mm % 50 === 0) continue;
+                    let px = left + (mm / RESISTOR_LENGTH_MM) * w;
+                    ctx.beginPath();
+                    ctx.moveTo(px, rulerY + 6);
+                    ctx.lineTo(px, rulerY + 10);
+                    ctx.stroke();
+                }
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#e8bc7a';
+                ctx.font = "16px 'Monaspace Krypton', monospace";
+                ctx.fillText('A', left - 16, y + 5);
+                ctx.fillText('B', left + w + 8, y + 5);
+            }
+
+            function drawProtectiveResistorWithZigzag(x, y, label, color) {
+                const w = 32,
+                    h = 56;
+                const left = x - w / 2,
+                    top = y - h / 2;
+                ctx.fillStyle = 'transparent';
+                roundRect(left, top, w, h, 8, true, false);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.3;
+                roundRect(left, top, w, h, 8, false, true);
+                ctx.fillStyle = color;
+                ctx.font = "16px 'Monaspace Krypton', monospace";
+                ctx.fillText(label, x + 22, y + 5);
+                ctx.beginPath();
+                ctx.strokeStyle = `${color}cc`;
+                ctx.lineWidth = 2;
+                const steps = 8;
+                const stepH = h / steps;
+                const leftMargin = 6;
+                const rightMargin = w - 6;
+                let startX = left + leftMargin;
+                let startY = top + stepH / 2;
+                ctx.moveTo(startX, startY);
+                for (let i = 0; i < steps; i++) {
+                    const segY = top + (i + 0.5) * stepH;
+                    if (i % 2 === 0) ctx.lineTo(left + rightMargin, segY);
+                    else ctx.lineTo(left + leftMargin, segY);
+                }
+                ctx.stroke();
+            }
+
+            function drawSliderPointerPremium() {
+                let y = WIRE_Y;
+                let dv = getDeltaV();
+                let pointerGlow = (Math.abs(dv) < 0.0015) ? '#6affb0' : '#ffb87a';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = pointerGlow;
+                ctx.fillStyle = pointerGlow;
+                ctx.beginPath();
+                ctx.moveTo(sliderPosX, y - 5);
+                ctx.lineTo(sliderPosX - 11, y - 24);
+                ctx.lineTo(sliderPosX + 11, y - 24);
+                ctx.fill();
+                ctx.fillStyle = '#22252e';
+                ctx.beginPath();
+                ctx.arc(sliderPosX, y, 8, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.fillStyle = '#8b6914';
+                ctx.font = "16px 'Monaspace Krypton', monospace";
+                ctx.fillText('C', sliderPosX - 5, y - 12);
+                ctx.shadowBlur = 0;
+            }
+
+            function drawAdvancedGalvanometer(x, y) {
+                const r = 52;
+                ctx.fillStyle = '#12141c';
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = '#00000080';
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = '#c8c0e0';
+                ctx.lineWidth = 2.2;
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                const centerUp = -Math.PI / 2;
+                const rangeRad = 120 * Math.PI / 180;
+                const startAngle = centerUp - rangeRad / 2;
+                const endAngle = centerUp + rangeRad / 2;
+                const radiusScale = r - 12;
+
+                function degToCanvasAngle(deg) {
+                    const t = (deg + 60) / 120;
+                    return startAngle + t * (endAngle - startAngle);
+                }
+                for (let deg = -60; deg <= 60; deg += 10) {
+                    const canvasAngle = degToCanvasAngle(deg);
+                    const x1 = x + Math.cos(canvasAngle) * (radiusScale - 6);
+                    const y1 = y + Math.sin(canvasAngle) * (radiusScale - 6);
+                    const x2 = x + Math.cos(canvasAngle) * radiusScale;
+                    const y2 = y + Math.sin(canvasAngle) * radiusScale;
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.strokeStyle = '#b0b0cc';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    if (deg % 20 === 0) {
+                        const textR = radiusScale - 10;
+                        const tx = x + Math.cos(canvasAngle) * textR;
+                        const ty = y + Math.sin(canvasAngle) * textR + 3;
+                        ctx.fillStyle = '#c8d0e8';
+                        ctx.font = "8px 'Monaspace Krypton', monospace";
+                        if (deg === 0) ctx.fillText(deg.toString(), tx - 2.5, ty);
+                        else ctx.fillText(deg.toString(), tx - 6.5, ty);
+                    }
+                }
+                ctx.beginPath();
+                ctx.arc(x, y, radiusScale - 2, startAngle, endAngle);
+                ctx.strokeStyle = '#6a7a9a';
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+                let angleDeg = getGalvanometerAngle();
+                angleDeg = Math.min(60, Math.max(-60, angleDeg));
+                const dv = getDeltaV();
+                const absDv = Math.abs(dv);
+                let pointerColor = absDv < 0.002 ? '#4ec9a0' : (absDv < 0.004 ? '#ffdd88' : '#e0556a');
+                const pointerAngle = degToCanvasAngle(angleDeg);
+                const pointerLen = radiusScale - 2;
+                const startLen = 0;
+                const lineEndX = x + Math.cos(pointerAngle) * (pointerLen - 6);
+                const lineEndY = y + Math.sin(pointerAngle) * (pointerLen - 6);
+                const lineStartX = x + Math.cos(pointerAngle) * startLen;
+                const lineStartY = y + Math.sin(pointerAngle) * startLen;
+                ctx.beginPath();
+                ctx.moveTo(lineStartX, lineStartY);
+                ctx.lineTo(lineEndX, lineEndY);
+                ctx.strokeStyle = pointerColor;
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                const arrowTipX = x + Math.cos(pointerAngle) * pointerLen;
+                const arrowTipY = y + Math.sin(pointerAngle) * pointerLen;
+                const perpAngle = pointerAngle + Math.PI / 2;
+                const arrowHalfWidth = 5;
+                const arrowBaseOffset = 6;
+                const arrowBaseX = arrowTipX - Math.cos(pointerAngle) * arrowBaseOffset;
+                const arrowBaseY = arrowTipY - Math.sin(pointerAngle) * arrowBaseOffset;
+                const leftX = arrowBaseX + Math.cos(perpAngle) * arrowHalfWidth;
+                const leftY = arrowBaseY + Math.sin(perpAngle) * arrowHalfWidth;
+                const rightX = arrowBaseX - Math.cos(perpAngle) * arrowHalfWidth;
+                const rightY = arrowBaseY - Math.sin(perpAngle) * arrowHalfWidth;
+                ctx.beginPath();
+                ctx.moveTo(arrowTipX, arrowTipY);
+                ctx.lineTo(leftX, leftY);
+                ctx.lineTo(rightX, rightY);
+                ctx.closePath();
+                ctx.fillStyle = pointerColor;
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = pointerColor + 'aa';
+                ctx.fill();
+                ctx.strokeStyle = '#ffffffaa';
+                ctx.lineWidth = 0.8;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#ddccaa';
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.fillStyle = '#aa9977';
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.fillStyle = '#b0b0cc';
+                ctx.font = "16px 'Monaspace Krypton', monospace";
+                ctx.fillText('G', x - 4, y + r - 16);
+            }
+
+            function drawAdvancedBattery(x, y, label, color, sub) {
+                const w = 44,
+                    h = 56;
+                let left = x - w / 2,
+                    top = y - h / 2;
+                ctx.fillStyle = '#11131c';
+                ctx.shadowBlur = 6;
+                roundRect(left, top, w, h, 10, true, false);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.5;
+                roundRect(left, top, w, h, 10, false, true);
+                ctx.fillStyle = color;
+                ctx.font = "16px 'Monaspace Krypton', monospace";
+                ctx.fillText(label, x - 4, y + 5);
+                ctx.fillRect(x - 12, y + 10, 24, 3);
+                ctx.fillRect(x - 18, y - 14, 36, 3);
+                ctx.fillStyle = `${color}cc`;
+                ctx.font = "12px 'Monaspace Krypton', monospace";
+                ctx.fillText(sub, x - 25, y + h / 2 + 16);
+                ctx.shadowBlur = 0;
+            }
+
+            function drawAdvancedSmallBattery(x, y, label, color, sub, active) {
+                const w = 44,
+                    h = 38;
+                let left = x - w / 2,
+                    top = y - h / 2;
+                ctx.globalAlpha = active ? 1.0 : 0.4;
+                ctx.fillStyle = '#11131c';
+                roundRect(left, top, w, h, 9, true, false);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.5;
+                roundRect(left, top, w, h, 9, false, true);
+                ctx.fillStyle = color;
+                ctx.font = "16px 'Monaspace Krypton', monospace";
+                ctx.fillText(label, x - 6, y + 6);
+                ctx.fillRect(x - 12, y - 15, 3, 30);
+                ctx.fillRect(x + 9, y - 8, 3, 18);
+                ctx.fillStyle = color;
+                ctx.font = "12px 'Monaspace Krypton', monospace";
+                ctx.fillText(sub, x - 22, y + h / 2 + 12);
+                ctx.globalAlpha = 1;
+            }
+
+            function drawPrecisionSwitch(x, y) {
+                let w = 88,
+                    h = 34,
+                    left = x - w / 2,
+                    top = y - h / 2;
+                ctx.fillStyle = 'transparent';
+                roundRect(left, top, w, h, 14, true, false);
+                ctx.strokeStyle = '#ced0e8';
+                ctx.lineWidth = 2.3;
+                roundRect(left, top, w, h, 14, false, true);
+                let angle = (mode === 'calibrate') ? -0.45 : 0.45;
+                let len = 30;
+                let ex = x + Math.sin(angle) * len,
+                    ey = y - Math.cos(angle) * len;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(ex, ey);
+                ctx.strokeStyle = '#ffddaa';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.fillStyle = '#d8bf8a';
+                ctx.beginPath();
+                ctx.arc(ex, ey, 5, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            function drawSmartLine(x1, y1, x2, y2) {
+                ctx.beginPath();
+                if (Math.abs(x2 - x1) > 8 && Math.abs(y2 - y1) > 8) {
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo((x1 + x2) / 2, y1);
+                    ctx.lineTo((x1 + x2) / 2, y2);
+                    ctx.lineTo(x2, y2);
+                } else {
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                }
+                ctx.stroke();
+            }
+
+            function drawNodeGlow(x, y, c, alpha) {
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = c;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = c;
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            function roundRect(x, y, w, h, r, fill, stroke) {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w - r, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                ctx.lineTo(x + w, y + h - r);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                ctx.lineTo(x + r, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+                ctx.closePath();
+                if (fill) ctx.fill();
+                if (stroke) ctx.stroke();
+            }
+            // ---------- 9. 事件绑定与初始化 ----------
+            function bindEvents() {
+                canvas.addEventListener('mousedown', startDragging);
+                window.addEventListener('mousemove', onDragMove);
+                window.addEventListener('mouseup', stopDragging);
+                canvas.addEventListener('touchstart', startDragging, { passive: false });
+                window.addEventListener('touchmove', onDragMove, { passive: false });
+                window.addEventListener('touchend', stopDragging);
+                canvas.addEventListener('wheel', (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const dpr = window.devicePixelRatio || 1;
+                    let clientX = e.clientX;
+                    const cssX = clientX - rect.left;
+                    const physicalX = cssX * dpr;
+                    const offsetX = (window._drawOffsetX || 0) * dpr;
+                    const scale = window._drawScale || 1;
+                    let canvasX = (physicalX - offsetX) / (scale * dpr);
+                    if (canvasX > WIRE_X1 - 22 && canvasX < WIRE_X2 + 22) {
+                        e.preventDefault();
+                        sliderPosX = clampSlider(sliderPosX + (e.deltaY > 0 ? WHEEL_STEP : -WHEEL_STEP));
+                        requestDraw(); updateInfoPanel();
+                    }
+                }, { passive: false });
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowLeft') { e.preventDefault(); sliderPosX = clampSlider(sliderPosX - (e.shiftKey ? KEY_STEP_FINE : KEY_STEP_NORMAL)); requestDraw(); updateInfoPanel(); }
+                    if (e.key === 'ArrowRight') { e.preventDefault(); sliderPosX = clampSlider(sliderPosX + (e.shiftKey ? KEY_STEP_FINE : KEY_STEP_NORMAL)); requestDraw(); updateInfoPanel(); }
+                });
+                btnCalibrate.addEventListener('click', () => { mode = 'calibrate'; updateModeUI(); requestDraw(); });
+                btnMeasure.addEventListener('click', () => { if (lsRecorded === null) { alert('请先在校准模式下记录Lₛ位置'); return; } mode = 'measure'; updateModeUI(); requestDraw(); });
+                btnRecord.addEventListener('click', () => {
+                    const dist = getSliderDist(), dv = getDeltaV();
+                    if (mode === 'calibrate') { lsRecorded = dist; updateRecordBtnStyle(); updateInfoPanel(); requestDraw(); }
+                    else if (mode === 'measure' && lsRecorded !== null) { lxRecorded = dist; addMeasurementRecord(dist, lsRecorded, dv, ES * (dist / lsRecorded)); updateRecordBtnStyle(); updateInfoPanel(); requestDraw(); }
+                });
+                btnReset.addEventListener('click', fullReset);
+                clearTableBtn.addEventListener('click', clearRecordsOnly);
+                bindFineButton(btnFineLeft, -1); bindFineButton(btnFineRight, 1);
+                window.addEventListener('resize', () => { if (drawPending) cancelAnimationFrame(drawPending); draw(); drawPending = null; });
+            }
+
+            function init() {
+                initPhysicalParams();
+                sliderPosX = WIRE_X1;
+                lsRecorded = null; lxRecorded = null;
+                measurementRecords = []; lxHistory = []; nextId = 1;
+                mode = 'calibrate';
+                galvanometerJitter = 0.05;
+                bindEvents();
+                updateModeUI();
+                renderRecordsTable();
+                draw();
+                updateInfoPanel();
+            }
+            init();
+        })();
+    </script>
+</body>
+
+</html>
